@@ -1,13 +1,8 @@
-#!/usr/bin/env python
+from fields import Field
 
-# List of models
 _models = {}
 
 # Abstract classes
-
-class Field(object):
-    pass
-
 
 class ModelMetaclass(type):
     # def __new__(mcs, *args, **kwargs):
@@ -56,92 +51,3 @@ class Model(object):
     class Meta:
         pass
 
-
-# Fields
-
-class GUIDField(Field):
-    pass
-
-class DateField(Field):
-    pass
-
-class UIntField(Field):
-    pass
-
-class FloatField(Field):
-    pass
-
-class ArrayField(Field):
-    def __init__(self, type=None):
-        self.type_klass = type
-
-class StringField(Field):
-    pass
-
-class BooleanField(Field):
-    pass
-
-class UrlField(Field):
-    pass
-
-class EnumField(Field):
-    def __init__(self, choices):
-        # Choices is a dict or a list
-        self.choices = choices
-
-# Reference fields
-
-class EmbeddedField(Field):
-    def __init__(self, model):
-        self.model_klass = model
-
-# Abstract model
-
-class BaseModel(Model):            # --> ISBaseModel
-    id = GUIDField()
-    created_at = DateField()
-    updated_at = DateField()
-
-    class Meta:
-        abstract = True
-
-
-# Concrete models
-
-class HeatmapDatapoint(Model):
-    up_votes = UIntField()
-    down_votes = UIntField()
-
-
-class Heatmap(BaseModel):
-    datapoints = ArrayField(type=HeatmapDatapoint)
-
-
-class User(BaseModel):
-    name = StringField()
-    is_followed = BooleanField()
-    profile_pic_small = UrlField()
-
-class Comment(BaseModel):
-    user = EmbeddedField(model=User)
-    text = StringField()
-    video_time_secs = FloatField()
-    up_votes = UIntField()
-    down_votes = UIntField()
-
-class Episode(BaseModel):
-    pass
-
-
-EpisodeStarChoices = []
-
-class EpisodeStar(User):
-    role_1 = EnumField(choices=EpisodeStarChoices)
-    role_2 = EnumField(choices=EpisodeStarChoices)
-
-
-import ipdb
-ipdb.set_trace()
-
-
-pass
