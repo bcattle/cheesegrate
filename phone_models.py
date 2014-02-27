@@ -4,8 +4,7 @@ from fields import GUIDField, DateField, UIntField, ArrayField, \
     StringField, BooleanField, UrlField, EmbeddedField, FloatField, \
     EnumField
 
-# List of models
-# _models = {}
+# The list of models lives in `base._models`
 
 
 # Abstract model
