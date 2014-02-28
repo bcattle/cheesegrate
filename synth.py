@@ -39,23 +39,23 @@ def get_class_or_module_for_classpath(classpath):
 
     else:
         # It's a module path only, import it
-        model_module = importlib.import_module(parsed_args.path)
+        model_module = importlib.import_module(classpath)
         return model_module, None
 
 
 # Did they ask for a factory or factories?
 factories = None
 if parsed_args.factory_path:
-    factory_module_name, factory_class_name = get_class_or_module_for_classpath(parsed_args.factory_path)
-    # If they specified a class, import it
-    factory_module = importlib.import_module(factory_module_name)
-    factory_klass = None
-    if factory_class_name:
-        factory_klass = getattr(factory_module, factory_class_name)
-    else:
+    factory_module, factory_klass = get_class_or_module_for_classpath(parsed_args.factory_path)
+    if factory_klass is None:
+        # They specified a module
         # Load the factories which were registered by the metaclass
         from factory.base import _factories
         factories = _factories
+    else:
+        # They specified a single class
+        factories = {factory_klass.__name__: factory_klass}
+
 
 # Import the models' classpath
 model_module, model_klass = get_class_or_module_for_classpath(parsed_args.path)
@@ -63,10 +63,13 @@ if model_klass is None:
     # The user specified a module
     # Since it was imported, the full list
     # of modules is now stored in `base`!
-    import base
+    from models.base import _models
 
     # Run the adapter on each class
-    for name, model_klass in base._models.items():
+    for name, model_klass in _models.items():
+        import ipdb
+        ipdb.set_trace()
+
         adapter = adapter_klass(model_klass, factories)
         pass
 

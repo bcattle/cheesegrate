@@ -1,5 +1,5 @@
-from base import Model
-from fields import GUIDField, DateField, UIntField, ArrayField, \
+from models.base import Model
+from models.fields import GUIDField, DateField, UIntField, ArrayField, \
     StringField, BooleanField, UrlField, EmbeddedField, FloatField, \
     EnumField
 

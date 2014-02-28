@@ -1,9 +1,9 @@
-from factory.base import BaseFactory
+from factory.base import Factory
 from factory.fields import RandomGuidField, DateNowUTCField, RandomIntField, \
     ArrayOfModelsField,  IndexedChoiceField, RandomBooleanField, \
     ChoiceField, RandomFloatField
 
-class DefaultFactory(BaseFactory):
+class DefaultFactory(Factory):
     """
     You can specify defaults by
       field type or field name
@@ -20,12 +20,12 @@ class DefaultFactory(BaseFactory):
     }
 
 
-class HeatmapDatapointFactory(BaseFactory):
+class HeatmapDatapointFactory(Factory):
     up_votes = RandomIntField(max=400)
     down_votes = RandomIntField(max=100)
 
 
-class HeatmapFactory(BaseFactory):
+class HeatmapFactory(Factory):
     datapoints = ArrayOfModelsField(length_min=10, length_max=40)
 
 
@@ -41,7 +41,7 @@ user_names_and_pics = [
     ('', ''),
 ]
 
-class UserFactory(BaseFactory):
+class UserFactory(Factory):
     name = IndexedChoiceField(sequence=user_names_and_pics, seq_index=0)
     profile_pic_small = IndexedChoiceField(sequence=user_names_and_pics, seq_index=1)
     is_followed = RandomBooleanField()
@@ -54,7 +54,7 @@ comments = [
     '',
 ]
 
-class CommentFactory(BaseFactory):
+class CommentFactory(Factory):
     # `user` is an EmbeddedField to the `User` model
     #   that model's Factory will be used by default
     text = ChoiceField(comments)
@@ -63,7 +63,7 @@ class CommentFactory(BaseFactory):
     down_votes = RandomIntField(max=10)
 
 
-class EpisodeStartFactory(BaseFactory):
+class EpisodeStartFactory(Factory):
     # Automatically resolves the superclass dependency
     # and runs UserFactory
 
