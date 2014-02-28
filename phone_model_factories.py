@@ -15,8 +15,8 @@ class DefaultFactory(Factory):
     the latter will be used.
     """
     type_defaults = {
-        'GUIDField': RandomGuidField,
-        'DateField': DateNowUTCField,
+        'GUIDField': RandomGuidField(),
+        'DateField': DateNowUTCField(),
     }
 
 

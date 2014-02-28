@@ -4,7 +4,9 @@ import random
 
 
 class FactoryField(object):
-    pass
+    # def __call__(self, obj, model_klass, field, adapter, factory):
+    def __call__(self):
+        raise NotImplementedError
 
 
 class RandomGuidField(FactoryField):
@@ -55,8 +57,8 @@ class IndexedChoiceField(FactoryField):
         self.sequence = sequence
         self.seq_index = seq_index
 
-    def __call__(self, index):
-        return self.sequence[index][self.seq_index]
+    def __call__(self):
+        return self.sequence[self.seq_index][self.seq_index]
 
 
 class ArrayOfModelsField(FactoryField):

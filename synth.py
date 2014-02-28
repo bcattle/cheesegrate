@@ -2,6 +2,7 @@
 import argparse
 import pkgutil
 import importlib
+import os
 
 # Load the list of adapters
 adapters = [pkg[1] for pkg in pkgutil.iter_modules(path=['adapters'])]
@@ -11,12 +12,15 @@ parser = argparse.ArgumentParser(description='Generates different representation
 parser.add_argument('adapter',  choices=adapters, help='Run a specified adapter')
 parser.add_argument('path', help='The classpath to the model(s) of interest, e.g. phone_models.User')
 parser.add_argument('factory_path', nargs='?', default='',      # <- makes it optional
-                    help='The classpath to a factory or factories for the models')
+                    help='The classpath to a factory or factories for the models (if applicable)')
+parser.add_argument('-o', '--output_path', nargs=1, help='Directory or filename send output to')
+parser.add_argument('-f', '--force', action='store_true', help='Force overwrite')
 
 parsed_args = parser.parse_args()
 
 # Import the adapter they asked for
-adapter_klass = importlib.import_module('adapters.%s' % parsed_args.adapter)
+adapter_module = importlib.import_module('adapters.%s' % parsed_args.adapter)
+Adapter = adapter_module.Adapter
 
 def get_class_or_module_for_classpath(classpath):
     """
@@ -57,6 +61,12 @@ if parsed_args.factory_path:
         factories = {factory_klass.__name__: factory_klass}
 
 
+# Switch to the output directory
+# TODO: could also be an output *file*
+if hasattr(parsed_args, 'output_path'):
+    os.chdir(os.path.abspath(parsed_args.output_path))
+
+
 # Import the models' classpath
 model_module, model_klass = get_class_or_module_for_classpath(parsed_args.path)
 if model_klass is None:
@@ -67,15 +77,13 @@ if model_klass is None:
 
     # Run the adapter on each class
     for name, model_klass in _models.items():
-        import ipdb
-        ipdb.set_trace()
-
-        adapter = adapter_klass(model_klass, factories)
-        pass
+        adapter = Adapter(model_klass, overwrite=parsed_args.force)
+        # Call adapter.transform_model or adapter.transform_model_array
+        adapter.transform_model(filename=None, factories=factories)
 
 else:
     # The user specified a specific class
     # Run the adapter
-    adapter = adapter_klass(model_klass, factories)
-    pass
+    adapter = Adapter(model_klass, overwrite=parsed_args.force)
+    adapter.transform_model(filename=None, factories=factories)
 
