@@ -1,7 +1,8 @@
 
 class BaseAdapter(object):
-    def __init__(self, model_klass):
+    def __init__(self, model_klass, factories=None):
         self.model_klass = model_klass
+        self.factories = factories
 
     def get_plural_filename_for_klass(self, model_klass):
         raise NotImplementedError
@@ -25,11 +26,11 @@ class BaseAdapter(object):
         """
         pass
 
-    def transform_model_array(self, model_klass, n, filename=None):
+    def transform_model_array(self, n, filename=None):
         if filename:
             self.filename = filename
         else:
-            self.filename = self.get_plural_filename_for_klass(model_klass)
+            self.filename = self.get_plural_filename_for_klass(self.model_klass)
         self.file = open(self.filename)
 
         # Generate the output
@@ -38,7 +39,7 @@ class BaseAdapter(object):
             # Set a cpunter variable we can use if we need to
             self.model_index = i
             # Run the transformation, returns string output
-            transformed = self._do_transform(model_klass)
+            transformed = self._do_transform(self.model_klass)
             if i < n - 1:
                 transformed += ',\n'
             self.file.write(transformed)
@@ -46,17 +47,17 @@ class BaseAdapter(object):
         self.file.close()
         self.post_process()
 
-    def transform_model(self, model_klass, filename=None):
+    def transform_model(self, filename=None):
         if filename:
             self.filename = filename
         else:
-            self.filename = self.get_filename_for_klass(model_klass)
+            self.filename = self.get_filename_for_klass(self.model_klass)
         self.file = open(self.filename)
 
         # Generate the output
         self.pre_transform(1)
         # Run the transformation
-        transformed = self._do_transform(model_klass)
+        transformed = self._do_transform(self.model_klass)
         self.file.write(transformed)
         self.post_transform(1)
         self.file.close()

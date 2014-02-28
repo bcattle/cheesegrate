@@ -5,13 +5,12 @@ _models = {}
 # Abstract classes
 
 class ModelMetaclass(type):
-    # def __new__(mcs, *args, **kwargs):
+    """
+    This metaclass registers models
+    and creates a Meta class with some default values (if necessary)
+    """
     def __new__(mcs, name, bases, attrs):
         # mcs is ModelMetaclass, an instance of `type`
-        # print name
-        # print bases
-        # # print attrs
-        # print ''
 
         # Need to check this because this also gets called
         # creating the Model class itself
@@ -50,4 +49,3 @@ class Model(object):
 
     class Meta:
         pass
-

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from base import Model
 from fields import GUIDField, DateField, UIntField, ArrayField, \
     StringField, BooleanField, UrlField, EmbeddedField, FloatField, \

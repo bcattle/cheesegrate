@@ -12,7 +12,7 @@ import datetime
 import uuid
 import random
 import argparse
-from models import Model, ModelField
+from parsed_models import Model, ModelField
 
 
 model_pattern = re.compile(r'^[\s]*@interface[\s]+([\w]+)[\s]*:[\s]*([\w]+)')
@@ -54,7 +54,7 @@ parser.add_argument('-o', help='The name of the output file to generate', defaul
 
 path = '.'
 if len(sys.argv) > 1:
-    path = sys.argv[1]
+    path = os.path.abspath(sys.argv[1])
 
 
 def scan_files(path, model_classes=None):
