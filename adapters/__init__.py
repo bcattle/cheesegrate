@@ -13,7 +13,10 @@ class BaseAdapter(object):
     def get_filename_for_klass(self, model_klass):
         raise NotImplementedError
 
-    def _do_transform(self, model_klass):
+    def python_values_for_class(self, model_klass):
+        raise NotImplementedError
+
+    def do_transform(self, model_klass):
         raise NotImplementedError
 
     def pre_transform(self, iterations):
@@ -41,12 +44,15 @@ class BaseAdapter(object):
         for i in range(n):
             # Set a counter variable we can use if we need to
             self.model_index = i
+            # Generate python values for the class
+            obj = self.python_values_for_class(self.model_klass)
             # Run the transformation, returns string output
-            transformed = self._do_transform(self.model_klass)
+            transformed = self.do_transform(obj)
             if i < n - 1:
                 transformed += ',\n'
             self.file.write(transformed)
         self.post_transform(n)
+        self.file.write('\n')
         self.file.close()
         self.post_process()
         print '%s generated %s' % (green('--'), self.filename)
@@ -66,10 +72,13 @@ class BaseAdapter(object):
 
         # Generate the output
         self.pre_transform(1)
-        # Run the transformation
-        transformed = self._do_transform(self.model_klass)
+        # Generate python values for the class
+        obj = self.python_values_for_class(self.model_klass)
+        # Run the transformation, returns string output
+        transformed = self.do_transform(obj)
         self.file.write(transformed)
         self.post_transform(1)
+        self.file.write('\n')
         self.file.close()
         self.post_process()
         print '%s generated %s' % (green('--'), self.filename)
@@ -97,3 +106,48 @@ class BaseFactoryAdapter(BaseAdapter):
         self.factories = factories
         return super(BaseFactoryAdapter, self).transform_model(filename)
 
+    def python_values_for_class(self, model_klass):
+        """
+        Returns a python dict containing the fields
+        and values populated from the relevant factories
+        for the specified type
+        """
+        # Find factory and default factory
+        factory = self.get_factory_for_model(model_klass)
+        default_factory = self.get_default_factory()
+
+        obj = {}
+        for field_name, field in model_klass._fields.items():
+
+            field_type_name = field.__class__.__name__
+
+            if factory:
+                # Does the model factory define this field?
+                if field_name in factory._fields:
+                    # Get the value
+                    obj[field_name] = factory._fields[field_name]()
+
+            # If not, is there a default factory?
+            elif default_factory:
+                # Does this field *name* have a default?
+                if field_name in default_factory._fields:
+                    obj[field_name] = default_factory._fields[field_name]()
+
+            # Does this field *type* have a default?
+            elif hasattr(default_factory, 'type_defaults') and \
+                    field_type_name in default_factory.type_defaults:
+                obj[field_name] = default_factory.type_defaults[field_type_name]()
+
+            else:
+                # If not, query the field to get the blank value
+                obj[field_name] = field.blank_value()
+
+        import ipdb
+        ipdb.set_trace()
+
+        # Does this model inherit from a class that we also need to process?
+        superclass = model_klass.__bases__[0]
+        if superclass.__name__ != 'Model':
+            obj.update(self.python_values_for_class(superclass))
+
+        return obj

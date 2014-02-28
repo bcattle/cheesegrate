@@ -63,7 +63,7 @@ if parsed_args.factory_path:
 
 # Switch to the output directory
 # TODO: could also be an output *file*
-if hasattr(parsed_args, 'output_path'):
+if parsed_args.output_path:
     os.chdir(os.path.abspath(parsed_args.output_path))
 
 
