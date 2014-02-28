@@ -2,6 +2,19 @@ from fields import Field
 
 _models = {}
 
+
+class ModelConstant(object):
+    """
+    This is a special class that indicates a constant
+    that should be passed through to the other data layers
+    """
+    def __init__(self, val):
+        self.val = val
+
+    def __call__(self):
+        return self.val
+
+
 # Abstract classes
 
 class ModelMetaclass(type):
@@ -18,12 +31,17 @@ class ModelMetaclass(type):
             # Find everything that inherits from Field
             # and put it in a list called `fields`
             fields = {}
+            constants = {}
             for attr_name, attr in attrs.items():
                 if issubclass(type(attr), Field):
                     # print '%s is a field' % str(attr)
                     attr._name = attr_name
                     fields[attr_name] = attr
+                if issubclass(type(attr), ModelConstant):
+                    attr._name = attr_name
+                    constants[attr_name] = attr
             attrs['_fields'] = fields
+            attrs['_constants'] = constants
 
             # Grab the Meta class from the superclass, if needed
             if not 'Meta' in attrs:
@@ -50,3 +68,5 @@ class Model(object):
 
     class Meta:
         pass
+
+

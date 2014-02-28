@@ -27,10 +27,13 @@ class FloatField(Field):
         return 0.0
 
 class ArrayField(Field):
-    def __init__(self, type=None):
+    def __init__(self, type=None, length=None):
         self.type_klass = type
+        self.length = length
 
     def blank_value(self):
+        if self.length:
+            return [{}] * self.length
         return []
 
 class StringField(Field):
