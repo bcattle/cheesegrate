@@ -133,17 +133,14 @@ class BaseFactoryAdapter(BaseAdapter):
                 if field_name in default_factory._fields:
                     obj[field_name] = default_factory._fields[field_name]()
 
-            # Does this field *type* have a default?
-            elif hasattr(default_factory, 'type_defaults') and \
-                    field_type_name in default_factory.type_defaults:
-                obj[field_name] = default_factory.type_defaults[field_type_name]()
+                # Does this field *type* have a default?
+                elif hasattr(default_factory, 'type_defaults') and \
+                        field_type_name in default_factory.type_defaults:
+                    obj[field_name] = default_factory.type_defaults[field_type_name]()
 
             else:
                 # If not, query the field to get the blank value
                 obj[field_name] = field.blank_value()
-
-        import ipdb
-        ipdb.set_trace()
 
         # Does this model inherit from a class that we also need to process?
         superclass = model_klass.__bases__[0]

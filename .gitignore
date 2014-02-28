@@ -2,3 +2,5 @@
 *.[hm]
 *~
 .idea
+*.json
+phone_*
