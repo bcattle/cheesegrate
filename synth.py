@@ -77,13 +77,13 @@ if model_klass is None:
 
     # Run the adapter on each class
     for name, model_klass in _models.items():
-        adapter = Adapter(model_klass, overwrite=parsed_args.force)
+        adapter = Adapter(overwrite=parsed_args.force)
         # Call adapter.transform_model or adapter.transform_model_array
-        adapter.transform_model(filename=None, factories=factories)
+        adapter.transform_model(model_klass, filename=None, factories=factories)
 
 else:
     # The user specified a specific class
     # Run the adapter
-    adapter = Adapter(model_klass, overwrite=parsed_args.force)
-    adapter.transform_model(filename=None, factories=factories)
+    adapter = Adapter(overwrite=parsed_args.force)
+    adapter.transform_model(model_klass, filename=None, factories=factories)
 

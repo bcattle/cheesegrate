@@ -16,6 +16,7 @@ class FactoryMetaclass(type):
             for attr_name, attr in attrs.items():
                 if issubclass(type(attr), FactoryField):
                     # print '%s is a field' % str(attr)
+                    attr._name = attr_name
                     fields[attr_name] = attr
             attrs['_fields'] = fields
 

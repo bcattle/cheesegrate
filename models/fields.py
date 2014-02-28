@@ -16,7 +16,7 @@ class GUIDField(Field):
 class DateField(Field):
     def blank_value(self):
         # ISO 8601
-        return "2000-01-01'T'00:00:00Z"
+        return "2000-01-01'T'00:00:00.000000Z"
 
 class UIntField(Field):
     def blank_value(self):

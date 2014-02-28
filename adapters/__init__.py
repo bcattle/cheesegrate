@@ -3,8 +3,9 @@ import sys
 from utils import green
 
 class BaseAdapter(object):
-    def __init__(self, model_klass, overwrite=False):
-        self.model_klass = model_klass
+    # def __init__(self, model_klass, overwrite=False):
+    def __init__(self, overwrite=False):
+        # self.model_klass = model_klass
         self.overwrite = overwrite
 
     def get_plural_filename_for_klass(self, model_klass):
@@ -32,11 +33,11 @@ class BaseAdapter(object):
         """
         pass
 
-    def transform_model_array(self, n, filename=None):
+    def transform_model_array(self, model_klass, n, filename=None):
         if filename:
             self.filename = filename
         else:
-            self.filename = self.get_plural_filename_for_klass(self.model_klass)
+            self.filename = self.get_plural_filename_for_klass(model_klass)
         self.file = open(self.filename)
 
         # Generate the output
@@ -45,7 +46,7 @@ class BaseAdapter(object):
             # Set a counter variable we can use if we need to
             self.model_index = i
             # Generate python values for the class
-            obj = self.python_values_for_class(self.model_klass)
+            obj = self.python_values_for_class(model_klass)
             # Run the transformation, returns string output
             transformed = self.do_transform(obj)
             if i < n - 1:
@@ -57,11 +58,11 @@ class BaseAdapter(object):
         self.post_process()
         print '%s generated %s' % (green('--'), self.filename)
 
-    def transform_model(self, filename=None):
+    def transform_model(self, model_klass, filename=None):
         if filename:
             self.filename = filename
         else:
-            self.filename = self.get_filename_for_klass(self.model_klass)
+            self.filename = self.get_filename_for_klass(model_klass)
         # If the filename exists, prompt to overwrite
         if not self.overwrite:
             if os.path.isfile(self.filename):
@@ -73,7 +74,7 @@ class BaseAdapter(object):
         # Generate the output
         self.pre_transform(1)
         # Generate python values for the class
-        obj = self.python_values_for_class(self.model_klass)
+        obj = self.python_values_for_class(model_klass)
         # Run the transformation, returns string output
         transformed = self.do_transform(obj)
         self.file.write(transformed)
@@ -98,19 +99,22 @@ class BaseFactoryAdapter(BaseAdapter):
     def get_default_factory(self):
         return self.factories.get('DefaultFactory', None)
 
-    def transform_model_array(self, n, filename=None, factories=None):
+    # def get_factory_for_field
+    def transform_model_array(self, model_klass, n, filename=None, factories=None):
         self.factories = factories
-        return super(BaseFactoryAdapter, self).transform_model_array(n, filename)
+        return super(BaseFactoryAdapter, self).transform_model_array(model_klass, n, filename)
 
-    def transform_model(self, filename=None, factories=None):
+    def transform_model(self, model_klass, filename=None, factories=None):
         self.factories = factories
-        return super(BaseFactoryAdapter, self).transform_model(filename)
+        return super(BaseFactoryAdapter, self).transform_model(model_klass, filename)
 
     def python_values_for_class(self, model_klass):
         """
         Returns a python dict containing the fields
         and values populated from the relevant factories
         for the specified type
+
+        This takes model_klass as a parameter so we can query superclasses
         """
         # Find factory and default factory
         factory = self.get_factory_for_model(model_klass)
@@ -125,18 +129,18 @@ class BaseFactoryAdapter(BaseAdapter):
                 # Does the model factory define this field?
                 if field_name in factory._fields:
                     # Get the value
-                    obj[field_name] = factory._fields[field_name]()
+                    obj[field_name] = factory._fields[field_name](self, model_klass)
 
             # If not, is there a default factory?
             elif default_factory:
                 # Does this field *name* have a default?
                 if field_name in default_factory._fields:
-                    obj[field_name] = default_factory._fields[field_name]()
+                    obj[field_name] = default_factory._fields[field_name](self, model_klass)
 
                 # Does this field *type* have a default?
                 elif hasattr(default_factory, 'type_defaults') and \
                         field_type_name in default_factory.type_defaults:
-                    obj[field_name] = default_factory.type_defaults[field_type_name]()
+                    obj[field_name] = default_factory.type_defaults[field_type_name](self, model_klass)
 
             else:
                 # If not, query the field to get the blank value
