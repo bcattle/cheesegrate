@@ -1,0 +1,93 @@
+//
+//  {{ filename }}
+//  {{ app }}
+//
+//  Created by {{ author }} on {{ today }}.
+//  Copyright (c) {{ this_year }} {{ company }} All rights reserved.
+//
+
+#import "{{ class_name }}.h"
+
+@implementation {{ class_name }}
+
++(NSDictionary*)JSONKeyPathsByPropertyKey {
+    return @{
+            // obj-c : json
+            {% for field in fields %}
+                {# Only need to list the field here #}
+                {#  if the obj-c / json names are different #}
+                {%  if field[0] != field[1] %}
+            @"{{ field[0] }}": @"{{ field[1] }}"{{ ',' if not loop.last }}
+                {% endif %}
+            {% endfor %}
+    };
+}
+
+{% for vt in value_transformers %}
++ (NSValueTransformer *){{ vt.objc_field }}JSONTransformer {
+    {{ vt.body }}
+}
+{% endfor %}
+
+
+{% if superclass_is_model %}
+{# Stuff that only applies to the base class #}
+
+-(NSTimeInterval)getAgeInSeconds {
+    return [self.createdAt timeIntervalSinceNow];
+}
+
+-(NSTimeInterval)timeSinceUpdateInSeconds {
+    return [self.updatedAt timeIntervalSinceNow];
+}
+
+{# General date-handling code, put here for all models to inherit from #}
+{# Note that it's static #}
+
+// http://horseshoe7.wordpress.com/2013/05/26/hands-on-with-the-mantle-model-framework/
++ (NSDateFormatter *)dateFormatter {
+    // Note this is static and only initializes once
+    static NSDateFormatter *kDateFormatter = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+    	kDateFormatter = [[NSDateFormatter alloc] init];
+	    kDateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+	    kDateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss'Z'";
+	    // you configure this based on the string that your webservice uses
+	    //kDateFormatter.dateFormat = @"yyyy-MM-dd";
+    });
+    return kDateFormatter;
+}
+
+{# Generic helper value transformers #}
+
+// Applies the value transformer to each value in the array and returns an array of results
+
++ (NSArray *)applyValueTransformer:(NSValueTransformer*)valueTransformer toArray:(NSArray*)array {
+    return [self applyValueTransformer:valueTransformer toArray:array inReverse:NO];
+}
+
++ (NSArray *)applyValueTransformer:(NSValueTransformer*)valueTransformer toArray:(NSArray*)array inReverse:(BOOL) reverse {
+    NSMutableArray *transformedValues = [[NSMutableArray alloc] initWithCapacity:[array count]];
+    for (id value in array) {
+        id transformedValue = nil;
+        if (reverse) {
+            transformedValue = [valueTransformer reverseTransformedValue:value];
+        } else {
+            transformedValue = [valueTransformer transformedValue:value];
+        }
+        if (transformedValue) {
+            [transformedValues addObject:transformedValue];
+        } else {
+            // For now, we just log an error message
+            NSLog(@"Unable to transform value %@ with %@", value, NSStringFromClass(valueTransformer.class));
+        }
+    }
+    return [NSArray arrayWithArray:transformedValues];
+}
+
+{% endif %}
+
+@end
+
+

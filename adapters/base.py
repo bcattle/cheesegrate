@@ -193,3 +193,9 @@ class BaseFactoryAdapter(BaseAdapter):
 
         return obj
 
+
+class ChainAdapter(BaseAdapter):
+    """
+    Runs a series of adapters serially
+    """
+    pass

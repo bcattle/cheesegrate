@@ -21,3 +21,28 @@ FIELD_PROPERTIES = {
     # Needs to include the ObjC class name
     EmbeddedField: '',
 }
+
+
+# This generates a block like ----
+
+# + (NSValueTransformer *)createdAtJSONTransformer {
+
+#     return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *str) {
+#         return [self.dateFormatter dateFromString:str];
+#     } reverseBlock:^(NSDate *date) {
+#         return [self.dateFormatter stringFromDate:date];
+#     }];
+
+# }
+
+
+FIELD_VALUE_TRANSFORMERS = {
+    DateField: """
+    return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *str) {
+        return [self.dateFormatter dateFromString:str];
+    } reverseBlock:^(NSDate *date) {
+        return [self.dateFormatter stringFromDate:date];
+    }];
+"""
+
+}
