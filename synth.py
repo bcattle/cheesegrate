@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 import argparse
-import pkgutil
+# import pkgutil
 import importlib
 import os
+import sys
+from utils import get_class_or_module_for_classpath, get_subpackages
 
 # Load the list of adapters
-adapters = [pkg[1] for pkg in pkgutil.iter_modules(path=['adapters'])]
+import contrib.adapters
+adapters = get_subpackages(contrib.adapters)
 
 # Add arguments for those adapters
 parser = argparse.ArgumentParser(description='Generates different representations of our data models')
@@ -15,36 +18,18 @@ parser.add_argument('factory_path', nargs='?', default='',      # <- makes it op
                     help='The classpath to a factory or factories for the models (if applicable)')
 parser.add_argument('-o', '--output_path', nargs=1, help='Directory or filename send output to')
 parser.add_argument('-f', '--force', action='store_true', help='Force overwrite')
+parser.add_argument('--help-adapters', action='store_true', help='Display documentation of each available adapter')
 
 parsed_args = parser.parse_args()
 
+# Show the adap[ter documentation if they asked for it
+if parsed_args.help_adapters:
+    pass
+    sys.exit(0)
+
 # Import the adapter they asked for
-adapter_module = importlib.import_module('adapters.%s' % parsed_args.adapter)
+adapter_module = importlib.import_module('contrib.adapters.%s.adapter' % parsed_args.adapter)
 Adapter = adapter_module.Adapter
-
-def get_class_or_module_for_classpath(classpath):
-    """
-    For a `classpath` like modules.stuff, import as a module
-    for a `classpath` like modules.MyClass, import the class
-
-    Returns: module, class
-
-    """
-    module_and_maybe_class = classpath.rsplit('.', 1)
-    if module_and_maybe_class[-1].isupper():
-        # It is a class.
-        # Import the module and pull the class from it
-        module, class_name = module_and_maybe_class
-        model_module = importlib.import_module(module)
-        model_klass = getattr(model_module, class_name)
-
-        # Return
-        return model_module, model_klass
-
-    else:
-        # It's a module path only, import it
-        model_module = importlib.import_module(classpath)
-        return model_module, None
 
 
 # Did they ask for a factory or factories?

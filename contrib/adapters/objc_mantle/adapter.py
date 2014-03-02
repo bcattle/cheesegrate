@@ -1,4 +1,4 @@
-from . import BaseAdapter
+from adapters.base import BaseAdapter
 
 class Adapter(BaseAdapter):
     def get_filename_for_klass(self, model_klass):

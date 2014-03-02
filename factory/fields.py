@@ -39,11 +39,12 @@ class ConsecutiveIntField(FactoryField):
     def __call__(self, adapter, model_klass):
         # We key the counter on name, adapter, model_klass
         key = (self._name, adapter, model_klass)
+        count = ConsecutiveIntField.counters[key] + self.min
         if self.counts_down:
             ConsecutiveIntField.counters[key] -= 1
         else:
             ConsecutiveIntField.counters[key] += 1
-        return ConsecutiveIntField.counters[key] + self.min
+        return count
 
 
 class RandomIntField(FactoryField):

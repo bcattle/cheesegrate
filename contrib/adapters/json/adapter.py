@@ -5,7 +5,7 @@ JSON adapter
   using factories if provided
 """
 import simplejson as json
-from . import BaseFactoryAdapter
+from adapters.base import BaseFactoryAdapter
 from utils import decamel
 
 class Adapter(BaseFactoryAdapter):
