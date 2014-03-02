@@ -1,0 +1,26 @@
+//
+//  {{ filename }}
+//  {{ app }}
+//
+//  Created by {{ author }} on {{ today }}.
+//  Copyright (c) {{ this_year }} {{ company }} All rights reserved.
+//
+
+{% if superclass_is_model %}
+#import <Foundation/Foundation.h>
+#import <Mantle/Mantle.h>
+
+@interface  {{ class_name }} : MTLModel <MTLJSONSerializing>
+{% else %}
+#import "{{ superclass }}.h"
+
+@interface  {{ class_name }} : {{ superclass }}
+{% endif %}
+
+{% for field in fields %}
+{{ field }}
+{% endfor %}
+
++(NSDictionary*) JSONKeyPathsByPropertyKey;
+
+@end

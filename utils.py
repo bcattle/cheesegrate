@@ -25,6 +25,9 @@ def decamel(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
+def to_camel(s):
+    return re.sub(r'(?!^)_([a-zA-Z])', lambda m: m.group(1).upper(), s)
+
 
 def get_class_or_module_for_classpath(classpath):
     """
@@ -35,7 +38,7 @@ def get_class_or_module_for_classpath(classpath):
 
     """
     module_and_maybe_class = classpath.rsplit('.', 1)
-    if module_and_maybe_class[-1].isupper():
+    if module_and_maybe_class[-1][0].isupper():
         # It is a class.
         # Import the module and pull the class from it
         module, class_name = module_and_maybe_class

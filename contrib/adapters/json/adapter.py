@@ -6,19 +6,9 @@ JSON adapter
 """
 import simplejson as json
 from adapters.base import BaseFactoryAdapter
-from utils import decamel
 
 class Adapter(BaseFactoryAdapter):
-
-    def get_plural_filename_for_klass(self, model_klass):
-        if hasattr(model_klass.Meta, 'name_plural'):
-            return '%s.json' % model_klass.Meta.name_plural.lower()
-        else:
-            return '%ss.json' % model_klass.__name__.lower()
-
-    def get_filename_for_klass(self, model_klass):
-        # JSON is "lowercase name .json"
-        return '%s.json' % decamel(model_klass.__name__)
+    file_extension = 'json'
 
     # The transformation
     def do_transform(self, obj):
@@ -42,7 +32,7 @@ class Adapter(BaseFactoryAdapter):
 
     def post_transform(self, iterations):
         """
-        Do any work required to finish the
+        Any work required to finish the
         output file
         """
         if iterations > 1:

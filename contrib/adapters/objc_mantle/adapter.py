@@ -1,37 +1,81 @@
+"""
+Objective-C Mantle adapter
+  Generates Obj-C data model classes
+  that use the Mantle framework
+  <https://github.com/MantleFramework/Mantle/>
+"""
+import datetime
+from utils import to_camel
 from adapters.base import BaseAdapter
+from settings import *
+from jinja2 import Environment, PackageLoader
+
 
 class Adapter(BaseAdapter):
     def get_filename_for_klass(self, model_klass):
-        # TODO: needs to make .h and .m files
-        return '%s.h' % model_klass.__name__.lower()
+        return '%s%s.h' % (OBJC_CLASS_PREFIX, model_klass.__name__)
 
     # The transformation
-    def _do_transform(self, model_klass):
-        pass
+    def transform_klass(self, model_klass):
+        """
+        Transforms the model type into an
+        output string to save the file
+        """
+        # Jinja2 setup
+        env = Environment(loader=PackageLoader('contrib.adapters.objc_mantle'),
+                          lstrip_blocks=True, trim_blocks=True)
 
-        # Returns the transformed object
-        return {}
+        # Template vars
+        superclass = model_klass.__bases__[0]
+        superclass_name = superclass.__name__
+        # Is klass a Model, or did it inherit from something else?
+        superclass_is_model = superclass_name is 'Model'
+
+        from contrib.adapters.objc_mantle.fields import FIELD_PROPERTIES
+        fields = []
+        for field_name, field in model_klass._fields.items():
+            fields.append('%s%s;' % (FIELD_PROPERTIES[field.__class__], to_camel(field_name)))
+
+        # Run the template
+        header_template = env.get_template('header.txt')
+        out = header_template.render(filename=self.get_filename_for_klass(model_klass),
+                                     app=APP, author=AUTHOR,
+                                     today=datetime.date.today().strftime('%x'),
+                                     this_year=datetime.date.today().year,
+                                     company=COMPANY,
+                                     superclass_is_model=superclass_is_model,
+                                     superclass=superclass_name,
+                                     class_name=model_klass.__name__,
+                                     fields=fields)
+
+        # Returns string to write to file
+        return out
 
     # Hooks
-
-    def pre_transform(self, iterations):
-        """
-        Generate any header information
-        required for the output file
-        """
-        pass
-
-        return ''
-
-    def post_transform(self, iterations):
-        """
-        Do any work required to finish the
-        output file
-        """
-        pass
-
-        return ''
 
     def post_process(self):
         # Indent
         pass
+
+
+
+# TODO: generates the .m file
+# class Adapter(BaseAdapter):
+#     file_extension = 'm'
+#
+#     # The transformation
+#     def do_transform(self, obj):
+#         """
+#         Transforms a python representation
+#         to the output format
+#         """
+#         pass
+#
+#         # Returns string to write to file
+#         return ''
+#
+#     # Hooks
+#
+#     def post_process(self):
+#         # Indent
+#         pass

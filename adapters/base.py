@@ -1,29 +1,46 @@
 import os.path
 import sys
-from utils import green
+from utils import green, decamel
 
 class BaseAdapter(object):
-    # def __init__(self, model_klass, overwrite=False):
+    file_extension = None
+
     def __init__(self, overwrite=False):
-        # self.model_klass = model_klass
         self.overwrite = overwrite
 
     def get_plural_filename_for_klass(self, model_klass):
-        raise NotImplementedError
+        if self.file_extension:
+            if hasattr(model_klass.Meta, 'name_plural'):
+                return '%s.%s' % (model_klass.Meta.name_plural.lower(),
+                                  self.file_extension)
+            else:
+                return '%ss.%s' % (model_klass.__name__.lower(),
+                                   self.file_extension)
+        else:
+            raise NotImplementedError
 
     def get_filename_for_klass(self, model_klass):
-        raise NotImplementedError
+        if self.file_extension:
+            return '%s.%s' % (decamel(model_klass.__name__),
+                              self.file_extension)
+        else:
+            raise NotImplementedError
 
-    def python_values_for_class(self, model_klass):
-        raise NotImplementedError
-
-    def do_transform(self, model_klass):
+    def transform_klass(self, model_klass):
         raise NotImplementedError
 
     def pre_transform(self, iterations):
+        """
+        Generate any header information
+        required for the output file
+        """
         pass
 
     def post_transform(self, iterations):
+        """
+        Do any work required to finish the
+        output file
+        """
         pass
 
     def post_process(self):
@@ -33,32 +50,7 @@ class BaseAdapter(object):
         """
         pass
 
-    def transform_model_array(self, model_klass, n, filename=None):
-        if filename:
-            self.filename = filename
-        else:
-            self.filename = self.get_plural_filename_for_klass(model_klass)
-        self.file = open(self.filename)
-
-        # Generate the output
-        self.pre_transform(n)
-        for i in range(n):
-            # Set a counter variable we can use if we need to
-            self.model_index = i
-            # Generate python values for the class
-            obj = self.python_values_for_class(model_klass)
-            # Run the transformation, returns string output
-            transformed = self.do_transform(obj)
-            if i < n - 1:
-                transformed += ',\n'
-            self.file.write(transformed)
-        self.post_transform(n)
-        self.file.write('\n')
-        self.file.close()
-        self.post_process()
-        print '%s generated %s' % (green('--'), self.filename)
-
-    def transform_model(self, model_klass, filename=None):
+    def transform_model(self, model_klass, filename=None, **kwargs):
         if filename:
             self.filename = filename
         else:
@@ -73,10 +65,8 @@ class BaseAdapter(object):
 
         # Generate the output
         self.pre_transform(1)
-        # Generate python values for the class
-        obj = self.python_values_for_class(model_klass)
         # Run the transformation, returns string output
-        transformed = self.do_transform(obj)
+        transformed = self.transform_klass(model_klass)
         self.file.write(transformed)
         self.post_transform(1)
         self.file.write('\n')
@@ -99,16 +89,66 @@ class BaseFactoryAdapter(BaseAdapter):
     def get_default_factory(self):
         return self.factories.get('DefaultFactory', None)
 
+    def transform_obj(self, obj):
+        raise NotImplementedError
+
     # def get_factory_for_field
     def transform_model_array(self, model_klass, n, filename=None, factories=None):
         self.factories = factories
-        return super(BaseFactoryAdapter, self).transform_model_array(model_klass, n, filename)
+
+        if filename:
+            self.filename = filename
+        else:
+            self.filename = self.get_plural_filename_for_klass(model_klass)
+        self.file = open(self.filename)
+
+        # Generate the output
+        self.pre_transform(n)
+        for i in range(n):
+            # Set a counter variable we can use if we need to
+            self.model_index = i
+            # Generate python values for the class
+            obj = self.python_obj_for_klass(model_klass)
+            # Run the transformation, returns string output
+            transformed = self.transform_obj(obj)
+            if i < n - 1:
+                transformed += ',\n'
+            self.file.write(transformed)
+        self.post_transform(n)
+        self.file.write('\n')
+        self.file.close()
+        self.post_process()
+        print '%s generated %s' % (green('--'), self.filename)
 
     def transform_model(self, model_klass, filename=None, factories=None):
         self.factories = factories
-        return super(BaseFactoryAdapter, self).transform_model(model_klass, filename)
 
-    def python_values_for_class(self, model_klass):
+        if filename:
+            self.filename = filename
+        else:
+            self.filename = self.get_filename_for_klass(model_klass)
+        # If the filename exists, prompt to overwrite
+        if not self.overwrite:
+            if os.path.isfile(self.filename):
+                char = raw_input('File "%s" exists. Overwrite? [Y]/n: ' % self.filename)
+                if char != 'Y' and char != '':
+                    sys.exit(0)
+        self.file = open(self.filename, 'w')
+
+        # Generate the output
+        self.pre_transform(1)
+        # Generate python values for the class
+        obj = self.python_obj_for_klass(model_klass)
+        # Run the transformation, returns string output
+        transformed = self.transform_obj(obj)
+        self.file.write(transformed)
+        self.post_transform(1)
+        self.file.write('\n')
+        self.file.close()
+        self.post_process()
+        print '%s generated %s' % (green('--'), self.filename)
+
+    def python_obj_for_klass(self, model_klass):
         """
         Returns a python dict containing the fields
         and values populated from the relevant factories
@@ -149,6 +189,7 @@ class BaseFactoryAdapter(BaseAdapter):
         # Does this model inherit from a class that we also need to process?
         superclass = model_klass.__bases__[0]
         if superclass.__name__ != 'Model':
-            obj.update(self.python_values_for_class(superclass))
+            obj.update(self.python_obj_for_klass(superclass))
 
         return obj
+
